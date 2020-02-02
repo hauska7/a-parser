@@ -1,33 +1,33 @@
 require 'set'
 
 class Parser
-  module MyFile
-    def self.each_line(file_path, &block)
-      File.readlines(file_path).each(&block)
+  module Input
+    def self.each_line(&block)
+      ARGF.each_line(&block)
     end
   end
 
   def run
     options = get_options
-    parse(options[:file_path], $stdout, options[:parse_mode])
+    parse($stdout, options[:parse_mode])
   rescue ArgumentError, Errno::ENOENT => e
     puts e.message
     exit 1
   end
 
-  def parse(file_path, out, mode)
+  def parse(out, mode)
     if mode == "most_visits"
-      parse_most_visits(file_path, out)
+      parse_most_visits(out)
     elsif mode == "unique_visits"
-      parse_unique_visits(file_path, out)
+      parse_unique_visits(out)
     else fail
     end
   end
 
-  def parse_most_visits(file_path, out)
+  def parse_most_visits(out)
     result = {}
     result.default = 0
-    MyFile.each_line(file_path) do |line|
+    Input.each_line do |line|
       page, ip = line.split
       result[page] = result[page] + 1
     end
@@ -37,12 +37,12 @@ class Parser
     end
   end
 
-  def parse_unique_visits(file_path, out)
+  def parse_unique_visits(out)
     result = Hash.new do |hash, page|
       hash[page] = Set.new
     end
 
-    MyFile.each_line(file_path) do |line|
+    Input.each_line do |line|
       page, ip = line.split
       result[page] << ip
     end
@@ -57,22 +57,24 @@ class Parser
   private
 
   def get_options
-    raise ArgumentError, "Usage: #{$0} webserver.log -unique_visits/-most_visits" if ARGV.length == 0
-    file_path = ARGV[0]
+    help_flag = ARGV.delete("-help")
+    raise ArgumentError, "Usage: #{$0} webserver.log -unique_visits OR -most_visits" if help_flag
 
-    if ARGV.length > 1
-      if ARGV[1] == "-unique_visits"
-        parse_mode = "unique_visits"
-      elsif ARGV[1] == "-most_visits"
-        parse_mode = "most_visits"
-      else
-        raise ArgumentError, "Usage: #{$0} webserver.log -unique_visits/-most_visits"
-      end
+    unique_visits_flag = ARGV.delete("-unique_visits")
+    most_visits_flag = ARGV.delete("-most_visits")
+    if unique_visits_flag && most_visits_flag
+      raise ArgumentError, "Usage: #{$0} webserver.log -unique_visits OR -most_visits"
     end
 
-    parse_mode = "most_visits" if parse_mode.nil?
+    if unique_visits_flag
+      parse_mode = "unique_visits"
+    elsif most_visits_flag
+      parse_mode = "most_visits"
+    else
+      parse_mode = "most_visits"
+    end
 
-    { file_path: file_path, parse_mode: parse_mode }
+    { parse_mode: parse_mode }
   end
 end
 

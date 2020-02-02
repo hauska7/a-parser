@@ -3,10 +3,10 @@ require 'pry'
 
 describe "test parser" do
   describe "ease of use" do
-    it "prints usage message when called without arguments" do
-      result = `ruby parser.rb`
+    it "prints usage message when called with -help" do
+      result = `ruby parser.rb -help`
       expect($?.exitstatus).to eq 1
-      expect(result).to eq "Usage: parser.rb webserver.log -unique_visits/-most_visits\n"
+      expect(result).to eq "Usage: parser.rb webserver.log -unique_visits OR -most_visits\n"
     end
 
     it "prints error message when argument is not a file" do
@@ -15,17 +15,9 @@ describe "test parser" do
       expect(result).to include "No such file"
     end
 
-    it "prints error message when parse mode is invalid" do
-      result = `ruby parser.rb short_webserver.log -invalid_parse_mode`
-      expect($?.exitstatus).to eq 1
-      expect(result).to eq "Usage: parser.rb webserver.log -unique_visits/-most_visits\n"
-    end
-
     it "script should work with unix pipes" do
       result = `cat short_webserver.log | ruby parser.rb`
-      lines = result.lines
-
-      expect(lines[0]).to eq "first line!"
+      expect(result.lines.first).to eq "/help_page/1 3 visits\n"
     end
   end
 
