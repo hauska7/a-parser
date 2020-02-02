@@ -8,6 +8,12 @@ describe "test parser" do
       expect($?.exitstatus).to eq 1
       expect(result).to eq "Usage: parser.rb webserver.log\n"
     end
+
+    it "prints error message when argument is not a file" do
+      result = `ruby parser.rb no_such_file`
+      expect($?.exitstatus).to eq 1
+      expect(result).to include "No such file"
+    end
   end
 
   describe "correctness" do
