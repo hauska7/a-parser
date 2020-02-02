@@ -1,3 +1,5 @@
+require 'set'
+
 class Parser
   module MyFile
     def self.each_line(file_path, &block)
@@ -36,7 +38,20 @@ class Parser
   end
 
   def parse_unique_visits(file_path, out)
-    fail
+    result = Hash.new do |hash, page|
+      hash[page] = Set.new
+    end
+
+    MyFile.each_line(file_path) do |line|
+      page, ip = line.split
+      result[page] << ip
+    end
+
+    result.transform_values! { |ips| ips.size }
+
+    result.sort_by { |page, visits_count| -visits_count }.each do |page, visits_count|
+      out.puts "#{page} #{visits_count} unique views"
+    end
   end
 
   private

@@ -51,11 +51,11 @@ describe "test parser" do
       third_line = lines[2].split
       expect(first_line.size).to eq 4
       expect(first_line[0]).to eq "/home"
-      expect(first_line[1]).to eq 2
+      expect(first_line[1]).to eq "2"
       expect(first_line[2]).to eq "unique"
       expect(first_line[3]).to eq "views"
-      expect([second_line[0], third_line[0]]).to match_array ["/home", "/contact"]
-      expect([second_line[1], third_line[1]]).to match_array [1, 1]
+      expect([second_line[0], third_line[0]]).to match_array ["/help_page/1", "/contact"]
+      expect([second_line[1], third_line[1]]).to match_array ["1", "1"]
     end
   end
 end
