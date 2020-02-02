@@ -10,7 +10,7 @@ class Parser
     parse(options[:file_path], $stdout)
   rescue ArgumentError, Errno::ENOENT => e
     puts e.message
-    raise e
+    exit 1
   end
 
   def parse(file_path, out)
@@ -22,10 +22,22 @@ class Parser
   private
 
   def get_options
-    raise ArgumentError, "Usage: #{$0} webserver.log" if ARGV.length != 1
+    raise ArgumentError, "Usage: #{$0} webserver.log -unique/-most_visits" if ARGV.length == 0
     file_path = ARGV[0]
 
-    { file_path: file_path }
+    if ARGV.length > 1
+      if ARGV[1] == "-unique"
+        parse_mode = "unique"
+      elsif ARGV[1] == "-most_visits"
+        parse_mode = "most_visits"
+      else
+        raise ArgumentError, "Usage: #{$0} webserver.log -unique/-most_visits"
+      end
+    end
+
+    parse_mode = "most_visits" if parse_mode.nil?
+
+    { file_path: file_path, parse_mode: parse_mode }
   end
 end
 

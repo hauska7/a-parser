@@ -6,13 +6,19 @@ describe "test parser" do
     it "prints usage message when called without arguments" do
       result = `ruby parser.rb`
       expect($?.exitstatus).to eq 1
-      expect(result).to eq "Usage: parser.rb webserver.log\n"
+      expect(result).to eq "Usage: parser.rb webserver.log -unique/-most_visits\n"
     end
 
     it "prints error message when argument is not a file" do
       result = `ruby parser.rb no_such_file`
       expect($?.exitstatus).to eq 1
       expect(result).to include "No such file"
+    end
+
+    it "prints error message when parse mode is invalid" do
+      result = `ruby parser.rb short_webserver.log -invalid_parse_mode`
+      expect($?.exitstatus).to eq 1
+      expect(result).to eq "Usage: parser.rb webserver.log -unique/-most_visits\n"
     end
   end
 
@@ -36,7 +42,7 @@ describe "test parser" do
     end
 
     it "ordered page visites from most unique visits to less" do
-      result = `ruby parser.rb short_webserver.log`
+      result = `ruby parser.rb short_webserver.log -unique`
       lines = result.lines
 
       expect(lines.size).to eq 3
