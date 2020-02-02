@@ -20,6 +20,13 @@ describe "test parser" do
       expect($?.exitstatus).to eq 1
       expect(result).to eq "Usage: parser.rb webserver.log -unique_visits/-most_visits\n"
     end
+
+    it "script should work with unix pipes" do
+      result = `cat short_webserver.log | ruby parser.rb`
+      lines = result.lines
+
+      expect(lines[0]).to eq "first line!"
+    end
   end
 
   describe "correctness" do
