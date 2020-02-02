@@ -1,5 +1,4 @@
 require "rspec"
-require 'pry'
 
 describe "test parser" do
   describe "ease of use" do
