@@ -5,26 +5,70 @@ class Parser
     def self.each_line(&block)
       ARGF.each_line(&block)
     end
+
+    def self.fetch_options
+      ARGV.select { |arg| arg[0] == "-" }
+    end
+
+    def self.remove_options
+      ARGV.reject! { |arg| arg[0] == "-" }
+    end
+  end
+
+  module Output
+    def self.puts(message)
+      $stdout.puts(message)
+    end
+  end
+
+  def validate_options(options)
+    if ["help", "h"].any? { |help_option| options.include?(help_option) }
+      raise ArgumentError, "Usage: #{$0} webserver.log -unique_visits OR -most_visits"
+    end
+
+    if options.include?("most_visits") && options.include?("unique_visits")
+      raise ArgumentError, "Usage: #{$0} webserver.log -unique_visits OR -most_visits"
+    end
+    true
+  end
+
+  def take_options_and_clean_up_input_for_processing
+    options = Input.fetch_options
+    Input.remove_options
+    options = options.map { |option| option.sub(/-+/, "") }
+    options
+  end
+
+  def parse_mode(options)
+    if options.include?("unique_visits")
+      "unique_visits"
+    elsif options.include?("most_visits")
+      "most_visits"
+    else
+      "most_visits"
+    end
   end
 
   def run
-    options = get_options
-    parse($stdout, options[:parse_mode])
+    options = take_options_and_clean_up_input_for_processing
+    validate_options(options)
+
+    parse(parse_mode(options))
   rescue ArgumentError, Errno::ENOENT => e
-    puts e.message
+    Output.puts e.message
     exit 1
   end
 
-  def parse(out, mode)
+  def parse(mode)
     if mode == "most_visits"
-      parse_most_visits(out)
+      parse_most_visits
     elsif mode == "unique_visits"
-      parse_unique_visits(out)
+      parse_unique_visits
     else fail
     end
   end
 
-  def parse_most_visits(out)
+  def parse_most_visits
     result = {}
     result.default = 0
     Input.each_line do |line|
@@ -33,11 +77,11 @@ class Parser
     end
 
     result.sort_by { |k, v| -v }.each do |page, visits_count|
-      out.puts "#{page} #{visits_count} visits"
+      Output.puts "#{page} #{visits_count} visits"
     end
   end
 
-  def parse_unique_visits(out)
+  def parse_unique_visits
     result = Hash.new do |hash, page|
       hash[page] = Set.new
     end
@@ -50,31 +94,8 @@ class Parser
     result.transform_values! { |ips| ips.size }
 
     result.sort_by { |page, visits_count| -visits_count }.each do |page, visits_count|
-      out.puts "#{page} #{visits_count} unique views"
+      Output.puts "#{page} #{visits_count} unique views"
     end
-  end
-
-  private
-
-  def get_options
-    help_flag = ARGV.delete("-help")
-    raise ArgumentError, "Usage: #{$0} webserver.log -unique_visits OR -most_visits" if help_flag
-
-    unique_visits_flag = ARGV.delete("-unique_visits")
-    most_visits_flag = ARGV.delete("-most_visits")
-    if unique_visits_flag && most_visits_flag
-      raise ArgumentError, "Usage: #{$0} webserver.log -unique_visits OR -most_visits"
-    end
-
-    if unique_visits_flag
-      parse_mode = "unique_visits"
-    elsif most_visits_flag
-      parse_mode = "most_visits"
-    else
-      parse_mode = "most_visits"
-    end
-
-    { parse_mode: parse_mode }
   end
 end
 
